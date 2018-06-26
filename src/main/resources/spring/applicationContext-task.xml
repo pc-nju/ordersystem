@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/task
+       http://www.springframework.org/schema/task/spring-task.xsd">
+    <!-- Spring3.0以后自带的任务调度  配置文件 -->
+
+    <!-- 扫描task包下的任务调度类，实现向Spring容器注册 -->
+    <context:component-scan base-package="com.imooc.task"/>
+    <!-- 配置任务调度 -->
+    <task:scheduled-tasks>
+        <!--ref参数指定的即任务类，method指定的即需要运行的方法，cron及cronExpression表达式-->
+        <!--每小时同步一次商品已售数量-->
+        <task:scheduled ref="businessTask" method="synchronizedNumber" cron="0 0 0/1 * * ?"/>
+        <!--每天同步一次商品星级-->
+        <!--<task:scheduled ref="businessTask" method="synchronizedNumber" cron="0 0 0 1/1 * ?"/>-->
+        <task:scheduled ref="businessTask" method="synchronizedStar" cron="0 0 0 0/1 * ?"/>
+        <!--每天按商品类别和时间段同步一次前一天各个时间段、各个商品类品的销量-->
+        <!--<task:scheduled ref="orderTask" method="synchronizedSaleNumberByBusinessCategory" cron="0 0 0 0/1 * ?"/>-->
+        <task:scheduled ref="orderTask" method="synchronizedSaleNumberByBusinessCategory" cron="0 21 21 * * ?"/>
+    </task:scheduled-tasks>
+</beans>

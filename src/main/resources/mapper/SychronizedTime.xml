@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.SynchronizedTimeDao">
+    <insert id="insertSynchronizedTime" parameterType="SynchronizedTime" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO syntime(`type`,updateTime) VALUES(#{type},#{updateTime})
+    </insert>
+    <select id="selectSynchronizedTimeByType" parameterType="String" resultType="SynchronizedTime">
+        SELECT id,`type`,updateTime FROM syntime WHERE `type`=#{type} LIMIT 1
+    </select>
+    <update id="updateSynchronizedTime">
+        UPDATE syntime SET updateTime=#{currentTime} WHERE `type`=#{type}
+    </update>
+</mapper>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.pc</groupId>
+    <artifactId>ordersystem</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring.version>4.3.17.RELEASE</spring.version>
+        <mybatis.version>3.4.2</mybatis.version>
+        <spring.mybatis.version>1.3.1</spring.mybatis.version>
+        <dbcp.version>1.4</dbcp.version>
+        <slf4j.version>1.7.24</slf4j.version>
+        <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+        <jackson.version>2.8.7</jackson.version>
+        <mysql.connector.java>5.1.29</mysql.connector.java>
+    </properties>
+    <!--
+    *************以下是SpringMVC需要用到的依赖，无需版本号，由“spring-framework-bom”统一管理*****************
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <!--
+             为了防止用Maven管理Spring项目时，不同的项目依赖了不同版本的Spring，可以使用Maven BOM来解决者一问题，
+                                 即可统一版本，而且，在引入BOM之后，在引入其他Spring依赖时，都无需指定版本
+            -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>${spring.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <!--  因为有了“spring-framework-bom” ，无需再指定spring相关依赖版本号 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+        </dependency>
+        <!--
+         这个jar文件是所有应用都要用到的，它包含访问配置文件、创建和管理bean 以及进行Inversion of Control
+                / Dependency Injection（IoC/DI）操作相关的所有类。如果应用只需基本的IoC/DI 支持，引入spring-core.jar
+                及spring-beans.jar 文件就可以了。外部依赖spring-core，cglib-nodep.jar。
+        -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <!-- 排除commmons-logging -->
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!--  spring表达式语言  -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-expression</artifactId>
+        </dependency>
+        <!--  为JDBC、Hibernate、JDO、JPA等提供的一致的声明式和编程式事务管理。  -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        <!--
+        *************以上是SpringMVC需要用到的依赖，无需版本号，由“spring-framework-bom”统一管理**************
+        -->
+        <!--  MYSQL（连接mysql数据库常用）  -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.connector.java}</version>
+        </dependency>
+        <!--
+        *************以下是SpringMVC中Mybatis需要用到的依赖******************
+        -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>${mybatis.version}</version>
+        </dependency>
+        <!--
+        mybatis-spring整合包，这样就可以通过spring配置bean的方式进行mybatis配置了，不然需要单独使用mybatis的配置
+        -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>${spring.mybatis.version}</version>
+        </dependency>
+        <!--
+        *************以上是SpringMVC中Mybatis需要用到的依赖******************
+        -->
+        <!-- Spring配置上传文件解析器需要用到的依赖 -->
+        <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.3.1</version>
+        </dependency>
+        <!--  导入druid的jar包，用来在spring/application-dao.xml中配置数据库  -->
+        <!--  阿里巴巴数据源包  -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+        <!-- *************以下是日志****************** -->
+        <!--logback-classic中就包含了logback-core、slf4j-apiJAR包。作用就是打印日志提供方法-->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.1.7</version>
+        </dependency>
+        <!-- logback-ext-spring是Spring提供的，它用于提供listener监听器。 -->
+        <dependency>
+            <groupId>org.logback-extensions</groupId>
+            <artifactId>logback-ext-spring</artifactId>
+            <version>0.1.4</version>
+        </dependency>
+        <!-- jcl-over-slf4j用来把Spring中大量使用common-logging替换成slf4j。只有有个这个包，才能打印出
+        Spring框架本身的信息数据。 -->
+        <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>1.7.25</version>
+        </dependency>
+
+        <!-- *************以上是日志****************** -->
+        <!-- *************以下是WEB三贱客****************** -->
+        <!--  提供 HttpServletRequest类  -->
+        <!--
+         https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
+        -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet-api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!--  JSP  -->
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>2.2.1-b03</version>
+            <scope>provided</scope>
+        </dependency>
+        <!--  JSTL  -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <!-- *************以上是WEB三贱客****************** -->
+        <!-- *************以下是JSON依赖（start）****************** -->
+        <!--  引入json相关3个jar包，处理json请求  -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <!-- *************以上是JSON依赖（end）****************** -->
+        <!--  常用工具（start）  -->
+        <!--  commons-lang3  -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.7</version>
+        </dependency>
+        <!--  commons-collections4  -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>4.1</version>
+        </dependency>
+        <!-- 缓存管理 -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>20.0</version>
+        </dependency>
+
+        <!--  常用工具（end）  -->
+        <!--  JUNIT(测试工具类)  -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

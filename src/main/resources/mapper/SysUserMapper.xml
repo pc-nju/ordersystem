@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.SysUserDao">
+    <resultMap id="SysUserMap" type="SysUser">
+        <id column="id" property="id"/>
+        <result column="group_id" property="groupId"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="nickName" property="nickName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    <!-- ******************* 数据库层来控制用户名、别名重复的问题 ************ -->
+    <insert id="insertUser" parameterType="SysUser" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO sys_user(username,password,nickName,create_time)
+        SELECT #{username},#{password},#{nickName},now() FROM dual
+        WHERE NOT EXISTS(SELECT 1 FROM sys_user where username=#{username} OR nickName=#{nickName})
+    </insert>
+
+    <delete id="deleteSysUserWithId" parameterType="int">
+        DELETE FROM sys_user WHERE id=#{id}
+    </delete>
+
+    <!-- ******************* 数据库层来控制用户名、别名重复的问题 ************ -->
+    <update id="modifyUser" parameterType="SysUser">
+        UPDATE sys_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="username != null and !&quot;&quot;.equals(username.trim())"> username=#{username},</if>
+            <if test="password != null and !&quot;&quot;.equals(password.trim())"> password=#{password},</if>
+            <if test="nickName != null and !&quot;&quot;.equals(nickName.trim())"> nickName=#{nickName},</if>
+            <if test="groupId != null"> group_id=#{groupId},</if>
+        </trim>
+        WHERE id = #{id}
+        <if test="username != null">
+            <!-- 目的：待修改的用户名除原用户名以外，不能和其他用户名重复（保证唯一）！-->
+            AND NOT EXISTS(SELECT 1 FROM (SELECT 1 FROM sys_user WHERE username=#{username} AND id !=#{id})a)
+        </if>
+        <if test="nickName != null">
+            <!-- 目的：待修改的别名除原别名以外，不能和其他别名重复（保证唯一）
+                 问题：为什么加了两层的“SELECT 1 FROM ***”？
+                 原因：MySql的特性：若需要修改某个表，则不能再拿这个表作为子查询的条件（同一个sql语句中，其实可以理解，
+                                    保证不会读到脏数据）。这句话再通俗点说，修改的表和后面子查询的表是同一张表的话，将
+                                    被判定异常。
+                                    我们通过嵌套一层，让mysql识别后面子查询的表是“a”，而不是“sys_user”，那么mysql就
+                                    不会判定异常！-->
+            AND NOT EXISTS(SELECT 1 FROM (SELECT 1 FROM sys_user WHERE nickName=#{nickName} AND id !=#{id})a)
+        </if>
+    </update>
+
+    <select id="selectUser" parameterType="SysUser" resultMap="SysUserMap">
+        SELECT id,group_id,username,password,nickName,update_time,create_time
+        FROM sys_user
+        <where>
+            <if test="username != null and !&quot;&quot;.equals(username.trim())">AND username=#{username}</if>
+            <if test="nickName != null and !&quot;&quot;.equals(nickName.trim())">AND nickName=#{nickName}</if>
+            <if test="password != null and !&quot;&quot;.equals(password.trim())">AND password=#{password}</if>
+        </where>
+        order by convert(nickName using gbk) collate gbk_chinese_ci
+    </select>
+    <select id="selectUserWithId" parameterType="int" resultType="SysUser">
+        SELECT id,group_id,username,password,nickName,update_time,create_time
+        FROM sys_user WHERE id=#{id} LIMIT 1
+    </select>
+    <update id="updateGroupIdNull" parameterType="SysUser">
+        UPDATE sys_user SET group_id=NULL
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="groupId != null">AND group_id=#{groupId}</if>
+        </where>
+    </update>
+</mapper>

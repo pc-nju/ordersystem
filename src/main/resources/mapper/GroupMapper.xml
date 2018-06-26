@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.GroupDao">
+    <resultMap id="GroupMap" type="Group">
+        <id column="g_id" property="id"/>
+        <result column="g_name" property="name"/>
+        <collection property="menuList" ofType="Menu" resultMap="com.imooc.dao.MenuDao.MenuMap"/>
+        <collection property="actionList" ofType="Action" resultMap="com.imooc.dao.ActionDao.ActionMap"/>
+    </resultMap>
+    <!-- 问题：这里为什么不用“where g.id=m.group_id”，而用“LEFT JOIN sys_group_menu m ON g.id=m.group_id”？
+         原因：    若用“g.id=m.group_id”，那么必须保证用户组有对应的菜单选项，才会被查询出来。而我们初始化的时候，
+               用户组是没有菜单项的，我们需要把所有的用户组都查询出来，没有菜单项的，给其分配菜单。
+                   而使用“LEFT JOIN sys_group_menu m ON g.id=m.group_id”，那么主表是“sys_group”，附表是
+               “sys_group_menu”，不管用户组有没有对应的菜单选项，用户组都会被查询出来。
+                   这里利用的就是“LEFT JOIN”特性：保证主表始终出现在最终结果表中！
+                   LEFT JOIN sys_group_menu gm ON g.id=gm.group_id-->
+    <!--<select id="selectGroups" parameterType="Group" resultMap="GroupMap">-->
+        <!--SELECT g.id g_id,g.name g_name,m.id m_id,m.name m_name,m.url m_url,m.parent_id m_parent_id,m.order_num m_order_num-->
+        <!--FROM sys_group g-->
+        <!--LEFT JOIN sys_group_menu gm ON g.id=gm.group_id-->
+        <!--LEFT JOIN sys_menu m ON m.id=gm.menu_id-->
+        <!--<where>-->
+            <!--<if test="id != null">AND g.id=#{id}</if>-->
+            <!--<if test="name != null and !&quot;&quot;.equals(name.trim())">AND g.`name`=#{name}</if>-->
+        <!--</where>-->
+        <!--ORDER BY CONVERT(g.`name` using gbk) COLLATE gbk_chinese_ci-->
+    <!--</select>-->
+
+    <select id="selectGroups" parameterType="Group" resultType="Group">
+        SELECT id,`name` FROM sys_group
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">AND `name`=#{name}</if>
+        </where>
+        ORDER BY CONVERT(`name` using gbk) COLLATE gbk_chinese_ci
+    </select>
+
+    <!-- 注意：只要别名和“resultMap”中规定的一致，就会进到相应的属性，而不管是否是某个特定的表 -->
+    <select id="selectGroupMenusWithId" parameterType="int" resultMap="GroupMap">
+        SELECT g.id g_id,g.name g_name,gm.menu_id m_id,ga.action_id a_id
+        FROM sys_group g
+        LEFT JOIN sys_group_menu gm ON g.id=gm.group_id
+        LEFT JOIN sys_group_action ga ON g.id=ga.group_id
+        WHERE g.id=#{id}
+    </select>
+
+    <select id="selectGroupMenusInfoWithId" parameterType="int" resultMap="GroupMap">
+        SELECT g.id g_id,g.name g_name,m.id m_id,m.name m_name,m.url m_url,m.parent_id m_parent_id,
+        a.id a_id,a.name a_name,a.url a_url,a.menu_id a_menu_id,a.method a_method
+        FROM sys_group g
+        LEFT JOIN sys_group_menu gm ON g.id=gm.group_id
+        LEFT JOIN sys_menu m ON m.id=gm.menu_id
+        LEFT JOIN sys_group_action ga ON g.id=ga.group_id
+        LEFT JOIN sys_action a ON a.id=ga.action_id
+        WHERE g.id=#{id} and a.menu_id=m.id
+    </select>
+
+    <!-- 不容许插入重复用户组名 -->
+    <insert id="insertGroup" parameterType="Group" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO sys_group(`name`)
+        SELECT #{name} FROM dual
+        WHERE NOT EXISTS (SELECT 1 FROM sys_group WHERE `name`=#{name})
+    </insert>
+    <!-- 不容许更新重复用户组名（除非与原用户组名重复） -->
+    <update id="updateGroup" parameterType="Group">
+        UPDATE sys_group SET `name`=#{name}
+        WHERE id=#{id} AND NOT EXISTS (SELECT 1 FROM (SELECT 1 FROM sys_group WHERE `name`=#{name} AND id!=#{id})a)
+    </update>
+    <delete id="deleteGroup" parameterType="Group">
+        DELETE FROM sys_group
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">AND `name`=#{name}</if>
+        </where>
+    </delete>
+</mapper>

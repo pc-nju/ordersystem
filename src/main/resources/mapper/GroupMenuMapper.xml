@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.GroupMenuDao">
+    <!-- 问题：这里为什么不使用“keyProperty="id" useGeneratedKeys="true"”？
+         原因：第一点：若数据库里已经规定了主键为自增，那么这里不加也行
+               第二点：我这里有多个参数，所有没有“parameterType”属性，导致mybtis框架找不到“id”，会报错-->
+    <insert id="insertGroupMenuBath">
+        INSERT INTO sys_group_menu(group_id,menu_id) VALUES
+        <foreach collection="menuIds" item="menuId" separator=",">
+             (#{groupId},#{menuId})
+        </foreach>
+    </insert>
+    <delete id="deleteGroupMenu" parameterType="GroupMenu">
+        DELETE FROM sys_group_menu
+        <where>
+            <if test="groupId != null"> AND group_id=#{groupId}</if>
+            <if test="menuId != null"> AND menu_id=#{menuId}</if>
+            <!-- 防止都为null时，把全表给删了 -->
+            <if test="groupId == null and menuId == null"> AND id=0</if>
+        </where>
+    </delete>
+</mapper>

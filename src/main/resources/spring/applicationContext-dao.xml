@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!-- 有了它，才能正确加载配置文件，才能用JDNL表达式读取配置文件中的数据：${jdbc.username} -->
+    <!--<bean id="propertyPlaceholderConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">-->
+        <!--<property name="locations">-->
+            <!--<list>-->
+                <!--&lt;!&ndash; classpath: 代表resources文件夹下的根路径&ndash;&gt;-->
+                <!--<value>classpath:properties/*.properties</value>-->
+            <!--</list>-->
+        <!--</property>-->
+    <!--</bean>-->
+    <!-- 现在把上面的注释掉，是采取了替代方式：<context:property-placeholder location="classpath:properties/*.properties"/> -->
+
+    <!-- *******************************配置数据库连接池Druid   start **************************************** -->
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="initialSize" value="${druid.initialSize}"/>
+        <property name="maxActive" value="${druid.maxActive}"/>
+        <property name="minIdle" value="${druid.minIdle}"/>
+        <property name="maxWait" value="${druid.maxWait}"/>
+        <property name="timeBetweenEvictionRunsMillis" value="${druid.testBetweenEvictionRunMillis}"/>
+        <property name="minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}"/>
+        <property name="testWhileIdle" value="${druid.testWhileIdle}"/>
+        <property name="validationQuery" value="${druid.validationQuery}"/>
+        <property name="testOnBorrow" value="${druid.testOnBorrow}"/>
+        <property name="testOnReturn" value="${druid.testOnReturn}"/>
+        <property name="poolPreparedStatements" value="${druid.poolPreparedStatements}"/>
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="${druid.maxOpenPreparedStatements}"/>
+        <property name="filters" value="${druid.filters}"/>
+        <property name="proxyFilters">
+            <list>
+                <ref bean="logFilter"/>
+                <ref bean="wall-filter"/>
+            </list>
+        </property>
+    </bean>
+    <bean id="logFilter" class="com.alibaba.druid.filter.logging.Slf4jLogFilter">
+        <property name="statementExecutableSqlLogEnable" value="false"/>
+    </bean>
+    <bean id="wall-filter" class="com.alibaba.druid.wall.WallFilter">
+        <property name="config" ref="wall-config" />
+    </bean>
+
+    <bean id="wall-config" class="com.alibaba.druid.wall.WallConfig">
+        <property name="multiStatementAllow" value="true" />
+    </bean>
+
+
+    <!-- *******************************配置数据库连接池Druid   end **************************************** -->
+
+    <!-- *******************************配置数据库Mybatis   start **************************************** -->
+    <!-- 配置sqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 注入数据源 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 扫描核心配置文件 -->
+        <property name="configLocation" value="classpath:spring/mybatis.xml"/>
+        <!-- 扫描JavaBean，自动使用别名 -->
+        <property name="typeAliasesPackage" value="com.imooc.bean"/>
+        <!-- 扫描Mybatis的sql配置文件 -->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+
+    <!-- 扫描dao包接口 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName"  value="sqlSessionFactory"/>
+        <property name="basePackage" value="com.imooc.dao"/>
+    </bean>
+    <!-- *******************************配置数据库Mybatis   end **************************************** -->
+</beans>

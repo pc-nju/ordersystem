@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+    <!-- 开启注解映射的支持 -->
+    <mvc:annotation-driven/>
+    <!-- 容许对静态资源文件的访问 -->
+    <mvc:default-servlet-handler/>
+    <!-- 配置视图解析器 -->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!-- 自动扫描的包名 -->
+    <context:component-scan base-package="com.imooc.controller"/>
+
+    <bean id="springContextHolder" class="com.imooc.util.SpringContextHolder"/>
+    <!-- 配置Spring拦截器 -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <!-- 拦截所有的请求 -->
+            <mvc:mapping path="/**"/>
+            <!-- 由于上面配置了拦截所有的请求，而我们在登录时，需要跳转到登录页面的请求也会被拦截，而拦截了之后，需要
+            验证是否登录，未登录，则需要跳转到登录页，这就陷入了一个死循环，所以这里就将所有的登录请求全部排除在外 -->
+            <mvc:exclude-mapping path="/login/**"/>
+            <!-- 将所有的api请求全部排除在外 -->
+            <mvc:exclude-mapping path="/api/**"/>
+            <!-- 因为是所有的访问都被拦截，包括静态资源，所以这里就需要将所有的静态资源请求全部排除在外 -->
+            <mvc:exclude-mapping path="/resources/**"/>
+            <!-- 拦截器的具体实施逻辑，这里面主要是验证Session中是否有登录用户 -->
+            <bean class="com.imooc.interceptor.SessionInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+</beans>

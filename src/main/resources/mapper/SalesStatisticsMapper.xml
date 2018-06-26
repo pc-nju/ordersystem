@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.SalesStatisticsDao">
+	<resultMap id="SalesStatisticsMap" type="SalesStatistics">
+		<id column="id" property="id"/>
+		<result column="category_name" property="businessCategory"/>
+		<result column="hour" property="hour"/>
+		<result column="sales_num" property="salesNum"/>
+		<result column="type" property="type"/>
+		<result column="createTime" property="createTime"/>
+	</resultMap>
+	<!-- 按照类别，时间段，统计各个类别商品各个时间段的销量 -->
+	<select id="countSalesNumberByHourYesterday" parameterType="String" resultMap="SalesStatisticsMap">
+		SELECT d.name category_name,date_format(o.createDate,"%H") `hour`,SUM(o.num) sales_num
+		FROM business b,orders o,dic d
+		WHERE b.id=o.business_id AND b.category=d.code AND d.type=#{type}
+		AND date_format(o.createDate,"%Y%m%d")=date_format(date_sub(now(),INTERVAL 1 DAY), "%Y%m%d")
+		GROUP BY d.name,date_format(o.createDate,"%H")
+	</select>
+	<insert id="insertBatch" parameterType="list">
+		INSERT INTO sales_statistics(category_name,`hour`,sales_num,type)
+		VALUES 
+		<foreach collection="list" item="salesStatistics" separator=",">
+			(#{salesStatistics.businessCategory},#{salesStatistics.hour},#{salesStatistics.salesNum},#{salesStatistics.type})
+		</foreach>
+	</insert>
+	<!-- 查询昨天的统计情况 -->
+	<select id="selectSalesStatisticsYesterday" resultMap="SalesStatisticsMap">
+		SELECT category_name,`hour`,sales_num FROM sales_statistics
+		WHERE date_format(now(),"%Y%m%d")=date_format(createTime,"%Y%m%d")
+	</select>
+</mapper>

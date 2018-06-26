@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.CommentDao">
+    <resultMap id="CommentMap" type="Comment">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="content" property="content"/>
+        <result column="star" property="star"/>
+        <result column="createTime" property="createTime"/>
+        <!-- 配置Order的resultMap“1对1”关系,实现映射关系的“传递” -->
+        <association property="order" resultMap="com.imooc.dao.OrderDao.OrderMap"/>
+    </resultMap>
+    <insert id="insertComment" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO comment(order_id,content,star) VALUES(#{orderId},#{content},#{star})
+    </insert>
+    <!-- 其中“u.phone,b.title”会自动映射到“OrderMap”，再由“OrderMap”映射到
+    “Order”对象的“Business”成员变量中的“title”属性和“User”成员变量中的“phone”属性 -->
+    <select id="searchByPage" parameterType="Comment" resultMap="CommentMap">
+        SELECT co.id,co.order_id,co.content,co.star,co.createTime,u.phone,b.title
+        FROM `comment` co,orders o,`user` u,business b
+        <where>
+            AND co.order_id=o.id AND o.user_id=u.id AND o.business_id=b.id
+            <if test="id != null">AND co.id=#{id}</if>
+            <if test="orderId != null">AND co.order_id=#{orderId}</if>
+            <if test="searchKey != null and !&quot;&quot;.equals(searchKey.trim())">
+                AND (
+                b.title LIKE CONCAT('%',#{searchKey},'%')
+                OR  u.phone=#{searchKey}
+                )
+            </if>
+            <if test="business != null and business.id != null">AND b.id=#{business.id}</if>
+        </where>
+        ORDER BY co.createTime ASC
+    </select>
+    <delete id="deleteComment" parameterType="Comment">
+        DELETE FROM `comment`
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="orderId != null">AND order_id=#{orderId}</if>
+        </where>
+    </delete>
+</mapper>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.BusinessDao">
+	<resultMap id="businessMap" type="Business">
+		<id column="id" property="id"/>
+		<result column="title" property="title"/>
+		<result column="subtitle" property="subtitle"/>
+		<result column="img_file_name" property="imgFileName"/>
+		<result column="price" property="price"/>
+		<result column="distance" property="distance"/>
+		<result column="number" property="number"/>
+		<result column="star" property="star"/>
+		<result column="commentNum" property="commentNum"/>
+		<result column="desc" property="desc"/>
+		<result column="city" property="city"/>
+		<result column="category" property="category"/>
+		<association property="cityDictionary" javaType="Dictionary">
+			<!--这里的column对应的是查询出来的别名，不是数据库中的列名-->
+			<result column="city_name" property="name"/>
+		</association>
+		<association property="categoryDictionary" javaType="Dictionary">
+			<result column="category_name" property="name"/>
+		</association>
+	</resultMap>
+	<insert id="insertBusiness" parameterType="Business" keyProperty="id" useGeneratedKeys="true">
+		INSERT INTO business(title,subtitle,city,category,img_file_name,price,distance,`desc`)
+		VALUES(#{title},#{subtitle},#{city},#{category},#{imgFileName},#{price},#{distance},#{desc})
+	</insert>
+	<select id="searchByPage" parameterType="Business" resultMap="businessMap">
+		SELECT b.id,b.title,b.subtitle,b.img_file_name,b.price,b.distance,b.number,b.star,b.commentNum,b.desc,dic_city.name city_name,dic_category.name category_name FROM business b
+		LEFT JOIN dic dic_city ON b.city=dic_city.code AND dic_city.type='${@com.imooc.constant.DictionaryConstant@TYPE_DICTIONARY_CITY}'
+		LEFT JOIN dic dic_category ON b.category=dic_category.code AND dic_category.type='${@com.imooc.constant.DictionaryConstant@TYPE_DICTIONARY_CATEGORY}'
+		<where>
+			<if test="city != null and !&quot;&quot;.equals(city.trim())">AND city=#{city}</if>
+			<if test="category != null and !&quot;&quot;.equals(category.trim())">AND category=#{category}</if>
+			<if test="searchKey != null and !&quot;&quot;.equals(searchKey.trim())">
+				AND (
+				b.title LIKE CONCAT('%',#{searchKey},'%')
+				OR  b.subtitle LIKE CONCAT('%',#{searchKey},'%')
+				OR  b.desc LIKE CONCAT('%',#{searchKey},'%')
+				)
+			</if>
+		</where>
+		<choose>
+			<when test="isRecommended">
+				ORDER BY `number` DESC,star DESC,createDate DESC
+			</when>
+			<otherwise>
+				ORDER BY id ASC
+			</otherwise>
+		</choose>
+	</select>
+	<select id="selectBusinesses" parameterType="Business" resultMap="businessMap">
+		SELECT * FROM business
+		<where>
+			<if test="id != null"> AND id=#{id}</if>
+			<!--<if test="title != null and !&quot;&quot;.equals(title.trim())">AND title LIKE CONCAT('%',#{title},'%')</if>-->
+			<!--<if test="subtitle != null and !&quot;&quot;.equals(subtitle.trim())">AND subtitle LIKE CONCAT('%',#{subtitle},'%')</if>-->
+			<!--<if test="desc != null and !&quot;&quot;.equals(desc.trim())">AND desc LIKE CONCAT('%',#{desc},'%')</if>-->
+			<if test="city != null and !&quot;&quot;.equals(city.trim())">AND city=#{city}</if>
+			<if test="category != null and !&quot;&quot;.equals(category.trim())">AND category=#{category}</if>
+		</where>
+	</select>
+
+	<select id="selectBusinessesById" parameterType="int" resultMap="businessMap">
+		SELECT * FROM business WHERE id=#{id}
+	</select>
+
+	<delete id="deleteBusiness" parameterType="Business">
+		DELETE FROM business
+		<where>
+			<if test="id != null"> AND id=#{id}</if>
+			<if test="title != null and !&quot;&quot;.equals(title.trim())">AND title=#{title}</if>
+			<if test="subtitle != null and !&quot;&quot;.equals(subtitle.trim())">AND subtitle=#{subtitle}</if>
+			<if test="city != null and !&quot;&quot;.equals(city.trim())">AND city=#{city}</if>
+			<if test="category != null and !&quot;&quot;.equals(category.trim())">AND category=#{category}</if>
+		</where>
+	</delete>
+	<update id="updateBusiness" parameterType="Business">
+		UPDATE business
+		<trim prefix="set" suffixOverrides=",">
+			<if test="title != null and !&quot;&quot;.equals(title.trim())">title=#{title},</if>
+			<if test="subtitle != null and !&quot;&quot;.equals(subtitle.trim())">subtitle=#{subtitle},</if>
+			<if test="imgFileName != null and !&quot;&quot;.equals(imgFileName.trim())">img_file_name=#{imgFileName},</if>
+			<if test="price != null">price=#{price},</if>
+			<if test="distance != null">distance=#{distance},</if>
+			<if test="number != null">`number`=#{number},</if>
+			<if test="star != null">star=#{star},</if>
+			<if test="desc != null and !&quot;&quot;.equals(desc.trim())">`desc`=#{desc},</if>
+			<if test="city != null and !&quot;&quot;.equals(city.trim())">city=#{city},</if>
+			<if test="category != null and !&quot;&quot;.equals(category.trim())">category=#{category},</if>
+		</trim>
+		WHERE id=#{id}
+	</update>
+	<update id="synchronizedNumber" parameterType="Date">
+		<if test="lastUpdateTime == null">
+			UPDATE business b,(SELECT o.business_id, SUM(o.num) total
+			FROM (SELECT business_id,num FROM orders WHERE createDate&lt;=#{currentTime})o GROUP BY o.business_id)temp
+			SET b.number=b.number + temp.total WHERE b.id=temp.business_id;
+		</if>
+		<if test="lastUpdateTime != null">
+			UPDATE business b,
+			(SELECT o.business_id, SUM(o.num) total
+			FROM (SELECT business_id,num FROM orders WHERE createDate&gt;#{lastUpdateTime} AND createDate&lt;=#{currentTime})o GROUP BY o.business_id)temp
+			SET b.number=b.number + temp.total WHERE b.id=temp.business_id;
+		</if>
+	</update>
+	<update id="synchronizedStar" parameterType="Date">
+		<if test="lastUpdateTime == null">
+			update business b,(
+			select o.business_id,sum(a.star) totalStar,count(*) totalComment from orders o,
+			(select order_id,star from `comment` where createTime&lt;=#{currentTime})a
+			where o.id=a.order_id group by o.business_id
+			)temp
+			set b.star=b.star + temp.totalStar,b.commentNum=b.commentNum+temp.totalComment where b.id=temp.business_id
+		</if>
+		<if test="lastUpdateTime != null">
+			update business b,(
+			select o.business_id,sum(a.star) totalStar,count(*) totalComment from orders o,
+			(select order_id,star from `comment` where createTime&gt;#{lastUpdateTime} AND createTime&lt;=#{currentTime})a
+			where o.id=a.order_id group by o.business_id
+			)temp
+			set b.star=b.star + temp.totalStar,b.commentNum=b.commentNum+temp.totalComment where b.id=temp.business_id
+		</if>
+	</update>
+</mapper>

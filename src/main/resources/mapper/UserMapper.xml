@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.UserDao">
+    <select id="selectUser" parameterType="User" resultType="User">
+        SELECT id,phone,`name`,password,createDate FROM `user`
+        <where>
+            <if test="id != null">AND id=#{id} </if>
+            <if test="phone != null">AND phone=#{phone} </if>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">AND `name`=#{name} </if>
+            <if test="password != null and !&quot;&quot;.equals(password.trim())">AND password=#{password} </if>
+        </where>
+    </select>
+    <select id="selectUserByPhone" parameterType="long" resultType="User">
+        SELECT id,phone,`name`,password,createDate FROM `user` WHERE phone=#{phone} LIMIT 1;
+    </select>
+</mapper>

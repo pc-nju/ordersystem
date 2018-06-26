@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.OrderDao">
+    <resultMap id="OrderMap" type="Order">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="business_id" property="businessId"/>
+        <result column="num" property="num"/>
+        <result column="comment_state" property="commentState"/>
+        <result column="price" property="price"/>
+        <result column="createDate" property="createDate"/>
+        <association property="user" javaType="User">
+            <result column="phone" property="phone"/>
+        </association>
+        <association property="business" javaType="Business">
+            <result column="img_file_name" property="imgFileName"/>
+            <result column="title" property="title"/>
+        </association>
+    </resultMap>
+    <insert id="insertOrder" parameterType="Order" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders(user_id,business_id,num,comment_state,price)
+        VALUES(#{userId},#{businessId},#{num},#{commentState},#{price})
+    </insert>
+    <select id="searchOrderListByPage" parameterType="Order" resultMap="OrderMap">
+        SELECT * FROM (SELECT o.id,o.user_id,o.business_id,o.num,o.comment_state,o.price,o.createDate,u.phone,b.img_file_name,b.title
+        FROM orders o,`user` u,business b
+        WHERE o.user_id=u.id AND o.business_id=b.id)temp
+        <where>
+            <if test="id != null">AND temp.id=#{id}</if>
+            <if test="userId != null">AND temp.user_id=#{userId}</if>
+            <if test="businessId != null">AND temp.business_id=#{businessId}</if>
+            <if test="searchKey != null and !&quot;&quot;.equals(searchKey.trim())">
+                AND (
+                temp.title LIKE CONCAT('%',#{searchKey},'%')
+                OR  temp.phone=#{searchKey}
+                )
+            </if>
+        </where>
+        ORDER BY temp.createDate
+    </select>
+    <select id="selectOrderById" parameterType="Integer" resultType="Order">
+        SELECT * FROM orders WHERE id=#{id} LIMIT 1
+    </select>
+    <update id="updateOrder" parameterType="Order">
+        UPDATE orders
+        <trim prefix="set" suffixOverrides=",">
+            <if test="num != null">num=#{num},</if>
+            <if test="commentState != null">comment_state=#{commentState},</if>
+            <if test="price != null">price=#{price},</if>
+        </trim>
+        WHERE id=#{id}
+    </update>
+</mapper>

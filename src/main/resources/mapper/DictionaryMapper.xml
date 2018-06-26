@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.DictionaryDao">
+	<select id="selectDictionaries" parameterType="Dictionary" resultType="Dictionary">
+		SELECT `type`,code,`name`,weight FROM dic
+		<where>
+			<if test="type != null and !&quot;&quot;.equals(type.trim())">AND `type`=#{type} </if>
+			<if test="code != null and !&quot;&quot;.equals(code.trim())">AND code=#{code} </if>
+			<if test="name != null and !&quot;&quot;.equals(name.trim())">AND `name`=#{name} </if>
+			<if test="weight != null">AND weight=#{weight} </if>
+		</where>
+		ORDER BY `name`,weight DESC
+	</select>
+</mapper>

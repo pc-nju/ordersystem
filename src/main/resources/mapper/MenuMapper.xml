@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.MenuDao">
+    <resultMap id="MenuMap" type="Menu">
+        <id column="m_id" property="id"/>
+        <result column="m_name" property="name"/>
+        <result column="m_url" property="url"/>
+        <result column="m_parent_id" property="parentId"/>
+        <result column="m_order_num" property="orderNum"/>
+        <collection property="actionList" javaType="list" resultMap="com.imooc.dao.ActionDao.ActionMap"/>
+    </resultMap>
+    <select id="selectMenu" parameterType="Menu" resultMap="MenuMap">
+        SELECT m.id m_id,m.name m_name,m.url m_url,m.parent_id m_parent_id,m.order_num m_order_num,
+        a.id a_id,a.menu_id a_menu_id,a.name a_name,a.url a_url
+        FROM sys_menu m
+        LEFT JOIN sys_action a ON m.id=a.menu_id
+        <where>
+            <if test="id != null">AND m.id=#{id}</if>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">AND m.name=#{name}</if>
+            <if test="parentId != null">AND m.parent_id=#{parentId}</if>
+        </where>
+        ORDER BY m.order_num DESC,CONVERT(m.name USING gbk) COLLATE gbk_chinese_ci
+    </select>
+    <select id="selectMenuWithId" parameterType="int" resultType="Menu">
+        SELECT id,`name`,url,parent_id,order_num FROM sys_menu WHERE id=#{id} LIMIT 1
+    </select>
+    <delete id="deleteMenu" parameterType="Menu">
+        DELETE FROM sys_menu
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">AND name=#{name}</if>
+            <if test="parentId != null">AND parent_id=#{parentId}</if>
+            <!--防止删除全表-->
+            <if test="id == null and name == null and parentId == null">AND id=0</if>
+        </where>
+    </delete>
+    <update id="updateMenu" parameterType="Menu">
+        UPDATE  sys_menu
+        <trim prefix="set" suffixOverrides=",">
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">`name`=#{name},</if>
+            <if test="url != null and !&quot;&quot;.equals(url.trim())">url=#{url},</if>
+        </trim>
+        WHERE id=#{id}
+        <!-- 若修改的是name,那么除原纪录以外，修改的name不能与数据库中的其他name重复 -->
+        <if test="name != null and !&quot;&quot;.equals(name.trim())">
+            AND NOT EXISTS (SELECT 1 FROM (SELECT 1 FROM sys_menu WHERE `name`=#{name} AND id!=#{id})temp)
+        </if>
+    </update>
+
+    <!-- 新增菜单，两个要求：
+         一、name不能重复
+         二、排序（order_num）取父节点下所有菜单节点排序的最大值加1，保证新增的菜单总是排在父节点下最前-->
+    <insert id="insertMenu" parameterType="Menu" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO sys_menu(`name`,url,parent_id,order_num)
+        SELECT #{name},#{url},#{parentId},
+        ifnull((SELECT max(order_num) +1 FROM sys_menu WHERE parent_id=#{parentId}),1)
+        WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE `name`=#{name})
+    </insert>
+
+    <update id="updateDropMenu" parameterType="Menu">
+        UPDATE sys_menu
+        SET parent_id=#{parentId},
+        order_num=ifnull((SELECT * FROM (SELECT max(order_num) +1 FROM sys_menu WHERE parent_id=#{parentId})temp),1)
+        WHERE id=#{id}
+    </update>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.GroupActionDao">
+    <insert id="insertGroupActionBatch">
+        INSERT INTO sys_group_action(group_id,action_id) VALUES
+        <foreach collection="actionIds" item="actionId" separator=",">
+            (#{groupId},#{actionId})
+        </foreach>
+    </insert>
+    <delete id="deleteGroupAction" parameterType="GroupAction">
+        DELETE FROM sys_group_action
+        <where>
+            <if test="groupId != null"> AND group_id=#{groupId}</if>
+            <if test="actionId != null"> AND action_id=#{actionId}</if>
+            <!-- 防止都为null时，把全表给删了 -->
+            <if test="groupId == null and actionId == null"> AND id=0</if>
+        </where>
+    </delete>
+    <!-- 注意点一：IN()：后面不需要跟表，就一个查询出来的结果集就行
+         注意点二：删除的表和查询的表不能是同一张表，所以需要用一个临时表做伪装-->
+    <delete id="deleteGroupActionByMenuId" parameterType="int">
+        DELETE FROM sys_group_action
+        WHERE action_id IN (
+        SELECT * FROM (SELECT action_id
+        FROM sys_group_action ga,sys_action a
+        WHERE ga.action_id=a.id AND a.menu_id=#{menuId})a
+        );
+    </delete>
+</mapper>

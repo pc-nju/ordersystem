@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.AdvertisementDao">
+	<insert id="insertAdvertisement" parameterType="Advertisement" keyProperty="id" useGeneratedKeys="true">
+		INSERT INTO ad(title, img_file_name, link, weight) VALUES(#{title}, #{imgFileName}, #{link}, #{weight})
+	</insert>
+	<select id="searchByPage" parameterType="Advertisement" resultType="Advertisement">
+		SELECT * FROM ad
+		<where>
+			<if test="id != null"> AND id = #{id}</if>
+			<if test="title != null and !&quot;&quot;.equals(title.trim())"> AND title LIKE CONCAT('%', #{title}, '%')</if>
+			<if test="imgFileName != null and !&quot;&quot;.equals(imgFileName.trim())"> AND img_file_name = #{imgFileName}</if>
+			<if test="link != null"> AND link = #{link}</if>
+			<if test="weight != null"> AND weight >= #{weight}</if>
+		</where>
+		ORDER BY weight DESC,createDate DESC
+	</select>
+	<delete id="deleteAdvertisement" parameterType="Advertisement">
+		DELETE FROM ad
+		<where>
+			<if test="id != null"> AND id = #{id}</if>
+			<if test="title != null and !&quot;&quot;.equals(title.trim())"> AND title = #{title}</if>
+			<if test="imgFileName != null and !&quot;&quot;.equals(imgFileName.trim())"> AND img_file_name = #{imgFileName}</if>
+			<if test="link != null"> AND link = #{link}</if>
+			<if test="weight != null"> AND weight = #{weight}</if>
+		</where>
+	</delete>
+	<select id="selectAdvertisements" parameterType="Advertisement" resultType="Advertisement">
+		SELECT * FROM ad
+		<where>
+			<if test="id != null"> AND id = #{id}</if>
+			<if test="title != null and !&quot;&quot;.equals(title.trim())"> AND title LIKE CONCAT('%', #{title}, '%')</if>
+			<if test="imgFileName != null and !&quot;&quot;.equals(imgFileName.trim())"> AND img_file_name = #{imgFileName}</if>
+			<if test="link != null"> AND link = #{link}</if>
+			<if test="weight != null"> AND weight = #{weight}</if>
+		</where>
+		ORDER BY weight,createDate DESC
+	</select>
+	<update id="updateAdvertisement" parameterType="Advertisement">
+		UPDATE ad
+		<trim prefix="set" suffixOverrides=",">
+			<if test="title != null and !&quot;&quot;.equals(title.trim())"> title = #{title},</if>
+			<if test="imgFileName != null and !&quot;&quot;.equals(imgFileName.trim())"> img_file_name = #{imgFileName},</if>
+			<if test="link != null"> link = #{link},</if>
+			<if test="weight != null"> weight = #{weight},</if>
+		</trim>
+		WHERE id = #{id}
+	</update>
+</mapper>

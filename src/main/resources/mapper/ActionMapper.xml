@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imooc.dao.ActionDao">
+    <resultMap id="ActionMap" type="Action">
+        <id column="a_id" property="id"/>
+        <result column="a_menu_id" property="menuId"/>
+        <result column="a_name" property="name"/>
+        <result column="a_url" property="url"/>
+        <result column="a_method" property="method"/>
+    </resultMap>
+
+    <select id="selectActionList" parameterType="Action" resultType="Action">
+        SELECT id,menu_id,`name`,url,method
+        FROM sys_action
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="menuId != null">AND menu_id=#{menuId}</if>
+            <if test="name != null">AND `name`=#{name}</if>
+        </where>
+        ORDER BY CONVERT(`name` USING gbk) COLLATE gbk_chinese_ci
+    </select>
+    <delete id="deleteAction" parameterType="Action">
+        DELETE FROM sys_action
+        <where>
+            <if test="id != null">AND id=#{id}</if>
+            <if test="menuId != null">AND menu_id=#{menuId}</if>
+            <if test="name != null">AND `name`=#{name}</if>
+            <!--防止把全表删了-->
+            <if test="id == null and menuId == null and name == null">AND id=0</if>
+        </where>
+    </delete>
+    <insert id="insertAction" parameterType="Action" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO sys_action(menu_id,`name`,url,method)
+        SELECT #{menuId},#{name},#{url},#{method} FROM dual
+        WHERE NOT EXISTS (SELECT 1 FROM sys_action WHERE `name`=#{name})
+    </insert>
+    <!-- 除原name以外，更新后的name值不能与数据库原有的name重复 -->
+    <update id="updateAction" parameterType="Action">
+        UPDATE sys_action
+        <trim prefix="set" suffixOverrides=",">
+            <if test="menuId != null">menu_id=#{menuId},</if>
+            <if test="name != null and !&quot;&quot;.equals(name.trim())">`name`=#{name},</if>
+            <if test="url != null and !&quot;&quot;.equals(url.trim())">url=#{url},</if>
+            <if test="method != null and !&quot;&quot;.equals(method.trim())">method=#{method},</if>
+        </trim>
+        WHERE id=#{id}
+        <if test="name != null and !&quot;&quot;.equals(name.trim())">
+            AND NOT EXISTS (SELECT 1 FROM (SELECT 1 FROM sys_action WHERE id!=#{id} AND `name`=#{name})temp)
+        </if>
+    </update>
+</mapper>

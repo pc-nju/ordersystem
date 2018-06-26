@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd">
+    <!-- 这个文件作为所有Spring文件的入口 -->
+
+    <!-- 一次性加载所有的配置文件 -->
+    <!-- 有了它，才能正确加载配置文件，才能用JDNL表达式读取配置文件中的数据：${jdbc.username} -->
+    <context:property-placeholder location="classpath:properties/*.properties"/>
+    <!-- 一次性引入所有的Spring配置文件，在web.xml中配置Spring文件的路径，只需要配这个文件就行 -->
+    <import resource="classpath:spring/applicationContext-*.xml"/>
+</beans>
